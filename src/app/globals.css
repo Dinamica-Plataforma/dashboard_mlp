@@ -24,3 +24,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5rem;
+  z-index: 1000;
+}
+
+.map-wrapper {
+  position: fixed;
+  top: 5.5rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(100vh - 4rem);
+}
+
+.leaflet-control-zoom a:focus {
+  outline: none;
+}
+
+.leaflet-container {
+  z-index: 1;
+  height: 100% !important;
+}

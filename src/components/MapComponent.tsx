@@ -1,9 +1,10 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import * as toGeoJSON from '@mapbox/togeojson';
+import InfoTable from './InfoTable';
 
 // Configuración de íconos predeterminados
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -24,12 +25,54 @@ interface MapComponentProps {
 
 const DefaultCenter: LatLng = [-33.45, -70.6667]; // Santiago de Chile
 const DefaultStyle = { height: '100%', width: '100%' };
+const DefaultZoom = 170; // Aumentamos significativamente el zoom por defecto
 
-const KmlLayer: React.FC<{ url: string }> = ({ url }) => {
+// Función para extraer datos de la descripción HTML
+const extractDataFromDescription = (description: string) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(description, 'text/html');
+  const rows = doc.getElementsByTagName('tr');
+  const data: { [key: string]: string } = {};
+
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i].getElementsByTagName('td');
+    if (cells.length >= 2) {
+      const key = cells[0].textContent?.trim();
+      const value = cells[1].textContent?.trim();
+      if (key && value) {
+        data[key] = value;
+      }
+    }
+  }
+
+  return data;
+};
+
+const KmlLayer: React.FC<{ url: string; onPolygonClick: (data: any) => void }> = ({ url, onPolygonClick }) => {
   const map = useMap();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
+
+  const defaultStyle = {
+    weight: 1,
+    color: '#186170',
+    fillOpacity: 0.5
+  };
+
+  const selectedStyle = {
+    weight: 3,
+    color: '#186170',
+    fillOpacity: 0.7,
+    fillColor: '#186170'
+  };
+
+  const hoverStyle = {
+    weight: 2,
+    color: '#186170',
+    fillOpacity: 0.6
+  };
 
   useEffect(() => {
     async function loadKml() {
@@ -43,10 +86,29 @@ const KmlLayer: React.FC<{ url: string }> = ({ url }) => {
         const text = await res.text();
         const xml = new DOMParser().parseFromString(text, 'text/xml');
         const geojson = toGeoJSON.kml(xml);
+
+        if (geojson.features) {
+          geojson.features = geojson.features.map(feature => {
+            if (feature.properties && feature.properties.description) {
+              const extractedData = extractDataFromDescription(feature.properties.description);
+              feature.properties = {
+                ...feature.properties,
+                ...extractedData
+              };
+            }
+            return feature;
+          });
+        }
+
         setData(geojson);
 
         const bounds = L.geoJSON(geojson).getBounds();
-        if (bounds.isValid()) map.fitBounds(bounds);
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, {
+            padding: [20, 20],
+            animate: true
+          });
+        }
       } catch (err) {
         console.error('Error al cargar KML:', err);
         setError(err instanceof Error ? err.message : 'Error desconocido al cargar el mapa');
@@ -57,11 +119,41 @@ const KmlLayer: React.FC<{ url: string }> = ({ url }) => {
     loadKml();
   }, [url, map]);
 
+  const getStyle = (feature: any) => {
+    if (feature.id === selectedFeatureId) {
+      return selectedStyle;
+    }
+    return defaultStyle;
+  };
+
+  const onEachFeature = (feature: any, layer: L.Path) => {
+    layer.on({
+      click: () => {
+        setSelectedFeatureId(feature.id);
+        layer.setStyle(selectedStyle);
+        layer.bringToFront();
+        onPolygonClick(feature);
+      },
+      mouseover: (e) => {
+        const layer = e.target as L.Path;
+        if (feature.id !== selectedFeatureId) {
+          layer.setStyle(hoverStyle);
+        }
+      },
+      mouseout: (e) => {
+        const layer = e.target as L.Path;
+        if (feature.id !== selectedFeatureId) {
+          layer.setStyle(defaultStyle);
+        }
+      }
+    });
+  };
+
   if (loading) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#186170] mx-auto"></div>
           <p className="mt-2 text-gray-600">Cargando mapa...</p>
         </div>
       </div>
@@ -79,23 +171,133 @@ const KmlLayer: React.FC<{ url: string }> = ({ url }) => {
     );
   }
 
-  return data ? <GeoJSON data={data} /> : null;
+  return data ? (
+    <GeoJSON 
+      data={data} 
+      onEachFeature={onEachFeature}
+      style={getStyle}
+    />
+  ) : null;
+};
+
+const AttributionControl: React.FC = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    // Crear un elemento div para la atribución
+    const attributionDiv = document.createElement('div');
+    attributionDiv.className = 'leaflet-control-attribution';
+    attributionDiv.style.position = 'absolute';
+    attributionDiv.style.bottom = '20px';
+    attributionDiv.style.right = '20px';
+    attributionDiv.style.padding = '5px 10px';
+    attributionDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+    attributionDiv.style.borderRadius = '4px';
+    attributionDiv.style.fontSize = '12px';
+    attributionDiv.style.color = '#186170';
+    attributionDiv.style.zIndex = '1000';
+    attributionDiv.innerHTML = 'Dinámica Plataforma';
+
+    // Agregar el elemento al contenedor del mapa
+    const mapContainer = map.getContainer();
+    mapContainer.appendChild(attributionDiv);
+
+    return () => {
+      mapContainer.removeChild(attributionDiv);
+    };
+  }, [map]);
+
+  return null;
 };
 
 const MapComponent: React.FC<MapComponentProps> = ({
   kmlUrl,
   center = DefaultCenter,
-  zoom = 13,
+  zoom = DefaultZoom,
   style = DefaultStyle,
   tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  tileAttribution = '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-}) => (
-  <div style={{ height: style.height, width: style.width, position: 'relative' }} className="z-0">
-    <MapContainer center={center} zoom={zoom} style={style}>
-      <TileLayer attribution={tileAttribution} url={tileUrl} />
-      <KmlLayer url={kmlUrl} />
-    </MapContainer>
-  </div>
-);
+  tileAttribution = ''
+}) => {
+  const [selectedPolygon, setSelectedPolygon] = useState<any>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const [mapCenter, setMapCenter] = useState<L.LatLng | null>(null);
+  const isInfoVisibleRef = useRef(false);
+
+  const adjustMapCenter = (showInfo: boolean) => {
+    if (mapRef.current) {
+      const mapWidth = mapRef.current.getSize().x;
+      const offsetX = showInfo ? mapWidth * 0.1665 : 0;
+      const newCenter = mapRef.current.containerPointToLatLng([
+        mapWidth/2 + offsetX,
+        mapRef.current.getSize().y/2
+      ]);
+      
+      mapRef.current.setView(newCenter, mapRef.current.getZoom());
+    }
+  };
+
+  const handlePolygonClick = (data: any) => {
+    if (!isInfoVisibleRef.current) {
+      // Solo guardamos el centro y ajustamos la vista si la información no estaba visible
+      if (mapRef.current) {
+        setMapCenter(mapRef.current.getCenter());
+        adjustMapCenter(true);
+      }
+      isInfoVisibleRef.current = true;
+    }
+    setSelectedPolygon(data);
+  };
+
+  const handleCloseInfo = () => {
+    if (mapRef.current && mapCenter) {
+      adjustMapCenter(false);
+      mapRef.current.setView(mapCenter, mapRef.current.getZoom());
+    }
+    setSelectedPolygon(null);
+    isInfoVisibleRef.current = false;
+  };
+
+  // Componente para manejar el mapa
+  const MapHandler: React.FC = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      mapRef.current = map;
+    }, [map]);
+
+    return null;
+  };
+
+  return (
+    <div className="map-wrapper overflow-hidden">
+      <InfoTable 
+        data={selectedPolygon} 
+        isVisible={!!selectedPolygon} 
+        onClose={handleCloseInfo}
+      />
+      <div 
+        style={{ 
+          transitionProperty: 'margin-left', 
+          transitionDuration: '300ms',
+          height: '100%'
+        }} 
+        className={selectedPolygon ? 'ml-[33.333%]' : 'ml-0'}
+      >
+        <MapContainer 
+          center={center} 
+          zoom={zoom} 
+          style={style}
+          className="h-full w-full"
+          keyboard={false}
+        >
+          <TileLayer attribution={tileAttribution} url={tileUrl} />
+          <KmlLayer url={kmlUrl} onPolygonClick={handlePolygonClick} />
+          <AttributionControl />
+          <MapHandler />
+        </MapContainer>
+      </div>
+    </div>
+  );
+};
 
 export default MapComponent; 
