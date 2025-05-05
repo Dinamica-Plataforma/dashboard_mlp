@@ -42,17 +42,12 @@ interface GeoJSONFeature {
   id: string;
   properties: {
     description?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   };
   geometry: {
     type: string;
-    coordinates: any;
+    coordinates: number[][];
   };
-}
-
-interface GeoJSONData {
-  type: string;
-  features: GeoJSONFeature[];
 }
 
 interface KmlLayerProps {
