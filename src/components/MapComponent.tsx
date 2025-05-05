@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import * as toGeoJSON from '@mapbox/togeojson';
 import InfoTable from './InfoTable';
+import { Feature, FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 
 // Configuración de íconos predeterminados
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -14,6 +15,20 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
 type LatLng = [number, number];
 
+type KmlProperties = GeoJsonProperties & {
+  nombre_pre?: string;
+  Comunas_t?: string;
+  Comuna?: string;
+  HA?: string;
+  titular__1?: string;
+  DBA_Mauro?: string;
+  Sit_Alt?: string;
+  Op_Act?: string;
+  Nivel_Priorizacion?: string;
+  Gestion_Recomendada?: string;
+  Temporalidad_Gestion?: string;
+};
+
 interface MapComponentProps {
   kmlUrl: string;
   center?: LatLng;
@@ -21,6 +36,28 @@ interface MapComponentProps {
   style?: React.CSSProperties;
   tileUrl?: string;
   tileAttribution?: string;
+}
+
+interface GeoJSONFeature {
+  id: string;
+  properties: {
+    description?: string;
+    [key: string]: any;
+  };
+  geometry: {
+    type: string;
+    coordinates: any;
+  };
+}
+
+interface GeoJSONData {
+  type: string;
+  features: GeoJSONFeature[];
+}
+
+interface KmlLayerProps {
+  url: string;
+  onPolygonClick: (data: Feature<Geometry, KmlProperties>) => void;
 }
 
 const DefaultCenter: LatLng = [-33.45, -70.6667]; // Santiago de Chile
@@ -48,9 +85,9 @@ const extractDataFromDescription = (description: string) => {
   return data;
 };
 
-const KmlLayer: React.FC<{ url: string; onPolygonClick: (data: any) => void }> = ({ url, onPolygonClick }) => {
+const KmlLayer: React.FC<KmlLayerProps> = ({ url, onPolygonClick }) => {
   const map = useMap();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<FeatureCollection<Geometry, KmlProperties> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
@@ -85,7 +122,7 @@ const KmlLayer: React.FC<{ url: string; onPolygonClick: (data: any) => void }> =
         }
         const text = await res.text();
         const xml = new DOMParser().parseFromString(text, 'text/xml');
-        const geojson = toGeoJSON.kml(xml);
+        const geojson = toGeoJSON.kml(xml) as FeatureCollection<Geometry, KmlProperties>;
 
         if (geojson.features) {
           geojson.features = geojson.features.map(feature => {
@@ -119,17 +156,18 @@ const KmlLayer: React.FC<{ url: string; onPolygonClick: (data: any) => void }> =
     loadKml();
   }, [url, map]);
 
-  const getStyle = (feature: any) => {
+  const getStyle = (feature: Feature<Geometry, KmlProperties> | undefined) => {
+    if (!feature) return defaultStyle;
     if (feature.id === selectedFeatureId) {
       return selectedStyle;
     }
     return defaultStyle;
   };
 
-  const onEachFeature = (feature: any, layer: L.Path) => {
+  const onEachFeature = (feature: Feature<Geometry, KmlProperties>, layer: L.Path) => {
     layer.on({
       click: () => {
-        setSelectedFeatureId(feature.id);
+        setSelectedFeatureId(feature.id as string);
         layer.setStyle(selectedStyle);
         layer.bringToFront();
         onPolygonClick(feature);
@@ -218,7 +256,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   tileAttribution = ''
 }) => {
-  const [selectedPolygon, setSelectedPolygon] = useState<any>(null);
+  const [selectedPolygon, setSelectedPolygon] = useState<Feature<Geometry, KmlProperties> | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const [mapCenter, setMapCenter] = useState<L.LatLng | null>(null);
   const isInfoVisibleRef = useRef(false);
@@ -236,9 +274,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   };
 
-  const handlePolygonClick = (data: any) => {
+  const handlePolygonClick = (data: Feature<Geometry, KmlProperties>) => {
     if (!isInfoVisibleRef.current) {
-      // Solo guardamos el centro y ajustamos la vista si la información no estaba visible
       if (mapRef.current) {
         setMapCenter(mapRef.current.getCenter());
         adjustMapCenter(true);

@@ -2,7 +2,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { HeaderSection, Section } from '@/components/ui/HeaderSection';
-import { Button } from '@/components/ui/Button';
 
 interface HeaderProps {
   /** Lista de secciones del menú */

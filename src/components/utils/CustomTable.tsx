@@ -6,7 +6,7 @@ interface CustomTableProps {
   /** Encabezados de la tabla */
   headers: string[];
   /** Datos de la tabla */
-  data: any[][];
+  data: (string | number | boolean | null)[][];
   /** Clase CSS opcional para la tabla */
   className?: string;
 }

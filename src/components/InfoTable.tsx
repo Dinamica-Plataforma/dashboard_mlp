@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
+import { Feature, Geometry, GeoJsonProperties } from 'geojson';
+
+type KmlProperties = GeoJsonProperties & {
+  nombre_pre?: string;
+  Comunas_t?: string;
+  Comuna?: string;
+  HA?: string;
+  titular__1?: string;
+  DBA_Mauro?: string;
+  Sit_Alt?: string;
+  Op_Act?: string;
+  Nivel_Priorizacion?: string;
+  Gestion_Recomendada?: string;
+  Temporalidad_Gestion?: string;
+};
 
 interface InfoTableProps {
-  data: any;
+  data: Feature<Geometry, KmlProperties> | null;
   isVisible: boolean;
   onClose: () => void;
 }
@@ -12,28 +27,25 @@ const InfoTable: React.FC<InfoTableProps> = ({ data, isVisible, onClose }) => {
   if (!isVisible || !data) return null;
 
   // Función para procesar los datos del KML
-  const processKmlData = (data: any) => {
+  const processKmlData = (data: Feature<Geometry, KmlProperties>) => {
     const properties = data.properties || {};
-    const processedData: { [key: string]: string } = {};
-
-    // Mapeo de campos específicos
-    const fieldMappings = {
-      'Nombre Pre': properties['nombre_pre'] || 'SIN INFORMACIÓN',
-      'Comuna': properties['Comunas_t'] || properties['Comuna'] || 'SIN INFORMACIÓN',
-      'Hectáreas': properties['HA'] || 'SIN INFORMACIÓN',
-      'Propietario': properties['titular__1'] || 'SIN INFORMACIÓN',
-      'DBA Mauro': properties['DBA_Mauro'] || 'SIN INFORMACIÓN',
-      'Sitios Alternativos': properties['Sit_Alt'] || 'SIN INFORMACIÓN',
-      'OP actual': properties['Op_Act'] || 'SIN INFORMACIÓN',
-      'Nivel de Priorización': properties['Nivel_Priorizacion'] || 'SIN INFORMACIÓN',
-      'Gestión Recomendada': properties['Gestion_Recomendada'] || 'SIN INFORMACIÓN',
-      'Temporalidad de Gestión': properties['Temporalidad_Gestion'] || 'SIN INFORMACIÓN'
+    const fieldMappings: { [key: string]: string } = {
+      'Nombre Pre': properties.nombre_pre || 'SIN INFORMACIÓN',
+      'Comuna': properties.Comunas_t || properties.Comuna || 'SIN INFORMACIÓN',
+      'Hectáreas': properties.HA || 'SIN INFORMACIÓN',
+      'Propietario': properties.titular__1 || 'SIN INFORMACIÓN',
+      'DBA Mauro': properties.DBA_Mauro || 'SIN INFORMACIÓN',
+      'Sitios Alternativos': properties.Sit_Alt || 'SIN INFORMACIÓN',
+      'OP actual': properties.Op_Act || 'SIN INFORMACIÓN',
+      'Nivel de Priorización': properties.Nivel_Priorizacion || 'SIN INFORMACIÓN',
+      'Gestión Recomendada': properties.Gestion_Recomendada || 'SIN INFORMACIÓN',
+      'Temporalidad de Gestión': properties.Temporalidad_Gestion || 'SIN INFORMACIÓN'
     };
 
     return fieldMappings;
   };
 
-  const processedData = processKmlData(data);
+  const fieldMappings = processKmlData(data);
 
   const tabs = [
     { id: 'general', label: 'Descripción General' },
@@ -48,7 +60,7 @@ const InfoTable: React.FC<InfoTableProps> = ({ data, isVisible, onClose }) => {
       case 'general':
         return (
           <div className="space-y-4">
-            {Object.entries(processedData).slice(0, 6).map(([key, value]) => (
+            {Object.entries(fieldMappings).slice(0, 6).map(([key, value]) => (
               <div key={key} className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="text-sm font-medium text-[#186170] mb-1">{key}</div>
                 <div className="text-base text-gray-900">{value}</div>
@@ -59,7 +71,7 @@ const InfoTable: React.FC<InfoTableProps> = ({ data, isVisible, onClose }) => {
       case 'profundizar':
         return (
           <div className="space-y-4">
-            {Object.entries(processedData).slice(6, 9).map(([key, value]) => (
+            {Object.entries(fieldMappings).slice(6, 9).map(([key, value]) => (
               <div key={key} className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="text-sm font-medium text-[#186170] mb-1">{key}</div>
                 <div className="text-base text-gray-900">{value}</div>
@@ -81,7 +93,7 @@ const InfoTable: React.FC<InfoTableProps> = ({ data, isVisible, onClose }) => {
       <div className="sticky top-0 bg-white/95 backdrop-blur-sm pb-4 border-b border-gray-200">
         <div className="flex justify-between items-center mt-10">
           <h2 className="text-2xl font-bold text-[#186170]">
-            {processedData['Nombre Pre']}
+            {fieldMappings['Nombre Pre']}
           </h2>
           <button
             onClick={onClose}
