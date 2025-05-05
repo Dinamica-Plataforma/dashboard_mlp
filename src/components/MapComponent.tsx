@@ -38,18 +38,6 @@ interface MapComponentProps {
   tileAttribution?: string;
 }
 
-interface GeoJSONFeature {
-  id: string;
-  properties: {
-    description?: string;
-    [key: string]: string | undefined;
-  };
-  geometry: {
-    type: string;
-    coordinates: number[][];
-  };
-}
-
 interface KmlLayerProps {
   url: string;
   onPolygonClick: (data: Feature<Geometry, KmlProperties>) => void;
