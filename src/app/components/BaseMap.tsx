@@ -12,7 +12,7 @@ const LayersControl          = dynamic(() => import('react-leaflet').then(m => m
 const LayersControlBaseLayer = dynamic(() => import('react-leaflet').then(m => m.LayersControl.BaseLayer), { ssr: false });
 
 // Tipos de configuración común
-export interface SubcategoryConfig { nombre: string; contenido: Record<string, string>; }
+export interface SubcategoryConfig { nombre: string; contenido: Record<string, string | undefined>; }
 export interface CategoryConfig    { nombre: string; subcategorias: SubcategoryConfig[]; }
 export interface InfoConfig        { nombre: string; categorias: CategoryConfig[]; }
 

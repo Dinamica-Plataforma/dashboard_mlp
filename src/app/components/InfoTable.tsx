@@ -2,28 +2,10 @@
 
 import React, { useState } from 'react';
 import { Feature, Geometry } from 'geojson';
+import type { InfoConfig, CategoryConfig, SubcategoryConfig } from '@/app/components/BaseMap';
 
 // Tipos genéricos para propiedades del KML
 type KmlProperties = Record<string, any>;
-
-// Configuraciones para las subcategorías
-interface SubcategoryConfig {
-  nombre: string;
-  contenido: Record<string, string>;
-}
-
-// Configuraciones para las categorías
-interface CategoryConfig {
-  nombre: string;
-  subcategorias: SubcategoryConfig[];
-}
-
-// Configuración principal del InfoTable, ahora con 'nombre' para el header
-interface InfoConfig {
-  /** Clave de propiedad en el KML a usar como título */
-  nombre: string;
-  categorias: CategoryConfig[];
-}
 
 interface InfoTableProps {
   data: Feature<Geometry, KmlProperties> | null;
@@ -101,6 +83,7 @@ const InfoTable: React.FC<InfoTableProps> = ({ data, isVisible, onClose, config 
           </h3>
           <div className="space-y-4">
             {Object.entries(subcat.contenido).map(([label, propKey]) => {
+              if (!propKey) return null;
               const val = propsMap[propKey] || 'SIN INFORMACIÓN';
               return (
                 <div key={label} className="bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">

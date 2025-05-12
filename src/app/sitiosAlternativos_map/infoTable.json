@@ -9,9 +9,9 @@
           "contenido": {
             "Nombre": "Nombre",
             "N de terrenos al interior de cada sitio": "area",
-            "Nivel de priorización": "",
-            "Tipo de gestión": "",
-            "Capa": ""
+            "Nivel de priorización": "a",
+            "Tipo de gestión": "a",
+            "Capa": "a"
           }
         }
       ]
@@ -22,9 +22,9 @@
         {
           "nombre": "",
           "contenido": {
-            "Interacción con área de depósito": "",
-            "Interacción con área de trazado": "",
-            "Área total del terreno ocupado por el sitio": ""
+            "Interacción con área de depósito": "a",
+            "Interacción con área de trazado": "a",
+            "Área total del terreno ocupado por el sitio": "a"
           }
         }
       ]

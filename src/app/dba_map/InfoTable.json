@@ -15,9 +15,9 @@
           {
             "nombre": "DBA",
             "contenido": {
-              "Caracterización de terrenos por variables": "",
-              "Nivel de priorización": "",
-              "Tipo de gestión": ""
+              "Caracterización de terrenos por variables": "a",
+              "Nivel de priorización": "a",
+              "Tipo de gestión": "a"
             }
           }
         ]
@@ -28,11 +28,11 @@
           {
             "nombre": "",
             "contenido": {
-              "Tiempo de llegada DBA": "",
-              "Superficie afectada DBA": "",
-              "Interacción con infraestructuras críticas": "",
-              "Número de construcciones": "",
-              "Número de viviendas": ""
+              "Tiempo de llegada DBA": "a",
+              "Superficie afectada DBA": "a",
+              "Interacción con infraestructuras críticas": "a",
+              "Número de construcciones": "a",
+              "Número de viviendas": "a"
             }
           }
         ]
