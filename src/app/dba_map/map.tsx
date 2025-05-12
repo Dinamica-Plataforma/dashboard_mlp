@@ -16,7 +16,7 @@ interface DbaMapProps {
 }
 
 // Capa KML con estilo uniforme para DBA
-const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }> = ({ url, onFeatureClick }) => {
+function KmlLayer({ url, onFeatureClick }: { url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }) {
   const map = useMap();
   useEffect(() => {
     console.log('Cargando KML desde:', url);
@@ -26,11 +26,12 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Km
       console.log('KML cargado correctamente');
       // Estilo uniforme para todos los polígonos
       layer.eachLayer((lyr: Layer) => {
-        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
+        const feat: Feature<Geometry, KmlProperties> = (lyr as unknown as { feature: Feature<Geometry, KmlProperties> }).feature || 
+                                                      (lyr as unknown as { toGeoJSON: () => Feature<Geometry, KmlProperties> }).toGeoJSON();
         console.log('Procesando capa:', feat);
         // Aplicar estilo con colores específicos para DBA
-        if ((lyr as any).setStyle) {
-          (lyr as any).setStyle({
+        if ('setStyle' in lyr) {
+          (lyr as { setStyle: (style: Record<string, unknown>) => void }).setStyle({
             color: '#186170',       // contorno
             fillColor: '#186170',   // relleno
             fillOpacity: 0.4,
@@ -53,15 +54,11 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Km
     return () => { map.removeLayer(layer); };
   }, [url, map, onFeatureClick]);
   return null;
-};
+}
 
 export default function DbaMap({config, style }: DbaMapProps) {
   const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, KmlProperties> | null>(null);
   
-  const handleFeatureClick = useCallback((feat: Feature<Geometry, KmlProperties>) => {
-    setSelectedFeature(feat);
-  }, []);
-
   // Calcular estilos para el contenedor del mapa
   const containerStyle = {
     transition: 'all 0.5s cubic-bezier(0.34, 1.25, 0.64, 1)',

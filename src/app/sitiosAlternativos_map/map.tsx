@@ -27,11 +27,12 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Km
       console.log('KML cargado correctamente');
       // Estilo uniforme para todos los polígonos
       layer.eachLayer((lyr: Layer) => {
-        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
+        const feat: Feature<Geometry, KmlProperties> = (lyr as unknown as { feature: Feature<Geometry, KmlProperties> }).feature || 
+                                                      (lyr as unknown as { toGeoJSON: () => Feature<Geometry, KmlProperties> }).toGeoJSON();
         console.log('Procesando capa:', feat);
         // Aplicar estilo con colores específicos para sitios alternativos
-        if ((lyr as any).setStyle) {
-          (lyr as any).setStyle({
+        if ('setStyle' in lyr) {
+          (lyr as { setStyle: (style: Record<string, unknown>) => void }).setStyle({
             color: '#186170',       // contorno verde
             fillColor: '#186170',   // relleno verde
             fillOpacity: 0.4,

@@ -77,7 +77,7 @@ export default function Home() {
             </div>
 
             <div className="flex-1 w-full flex flex-col gap-5 items-center justify-center ">
-              {menuItems.map((item, i) => (
+              {menuItems.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
