@@ -1,59 +1,15 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import BaseMap, { InfoConfig, MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
 import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
-import { useMap } from 'react-leaflet';
-import * as omnivore from 'leaflet-omnivore';
-import type { Layer, LeafletEvent } from 'leaflet';
 
 type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface DbaMapProps {
   config: InfoConfig;
   style?: React.CSSProperties;
-}
-
-// Capa KML con estilo uniforme para DBA
-function KmlLayer({ url, onFeatureClick }: { url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }) {
-  const map = useMap();
-  useEffect(() => {
-    console.log('Cargando KML desde:', url);
-    const layer = omnivore.kml(url);
-    
-    layer.on('ready', () => {
-      console.log('KML cargado correctamente');
-      // Estilo uniforme para todos los polígonos
-      layer.eachLayer((lyr: Layer) => {
-        const feat: Feature<Geometry, KmlProperties> = (lyr as unknown as { feature: Feature<Geometry, KmlProperties> }).feature || 
-                                                      (lyr as unknown as { toGeoJSON: () => Feature<Geometry, KmlProperties> }).toGeoJSON();
-        console.log('Procesando capa:', feat);
-        // Aplicar estilo con colores específicos para DBA
-        if ('setStyle' in lyr) {
-          (lyr as { setStyle: (style: Record<string, unknown>) => void }).setStyle({
-            color: '#186170',       // contorno
-            fillColor: '#186170',   // relleno
-            fillOpacity: 0.4,
-            weight: 2
-          });
-        }
-        lyr.on('click', () => onFeatureClick(feat));
-      });
-      // Ajustar vista a todos los polígonos
-      const bounds = layer.getBounds();
-      console.log('Ajustando vista a bounds:', bounds);
-      map.fitBounds(bounds, { padding: [20, 20], animate: true });
-    });
-
-    layer.on('error', (event: LeafletEvent) => {
-      console.error('Error al cargar el KML:', event);
-    });
-
-    layer.addTo(map);
-    return () => { map.removeLayer(layer); };
-  }, [url, map, onFeatureClick]);
-  return null;
 }
 
 export default function DbaMap({config, style }: DbaMapProps) {

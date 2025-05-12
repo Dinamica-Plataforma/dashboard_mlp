@@ -23,9 +23,10 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Km
     const layer = omnivore.kml(url);
     layer.on('ready', () => {
       layer.eachLayer((lyr: Layer) => {
-        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
-        if ((lyr as any).setStyle) {
-          (lyr as any).setStyle({
+        const feat: Feature<Geometry, KmlProperties> = (lyr as unknown as { feature: Feature<Geometry, KmlProperties> }).feature || 
+                                                      (lyr as unknown as { toGeoJSON: () => Feature<Geometry, KmlProperties> }).toGeoJSON();
+        if ('setStyle' in lyr) {
+          (lyr as { setStyle: (style: Record<string, unknown>) => void }).setStyle({
             color: '#186170',       // contorno
             fillColor: '#186170',   // relleno
             fillOpacity: 0.4,
