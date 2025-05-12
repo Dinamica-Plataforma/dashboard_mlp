@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import BaseMap, { MapResizer, InfoConfig } from '@/app/components/BaseMap';
+import BaseMap, { InfoConfig } from '@/app/components/BaseMap';
+import { MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
 import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
 import { useMap } from 'react-leaflet';
 import * as omnivore from 'leaflet-omnivore';
 import type { Layer } from 'leaflet';
+
+type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface CharacterizationMapProps {
   kmlUrl: string;
@@ -15,13 +18,13 @@ interface CharacterizationMapProps {
 }
 
 // Capa KML con estilo uniforme para caracterización
-const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Record<string, unknown>>) => void }> = ({ url, onFeatureClick }) => {
+const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }> = ({ url, onFeatureClick }) => {
   const map = useMap();
   useEffect(() => {
     const layer = omnivore.kml(url);
     layer.on('ready', () => {
       layer.eachLayer((lyr: Layer) => {
-        const feat: Feature<Geometry, Record<string, unknown>> = (lyr as any).feature || (lyr as any).toGeoJSON();
+        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
         if ((lyr as any).setStyle) {
           (lyr as any).setStyle({
             color: '#186170',       // contorno
@@ -43,9 +46,9 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Re
 };
 
 export default function CharacterizationMap({ kmlUrl, config, style }: CharacterizationMapProps) {
-  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, Record<string, unknown>> | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, KmlProperties> | null>(null);
   
-  const handleFeatureClick = useCallback((feat: Feature<Geometry, Record<string, unknown>>) => {
+  const handleFeatureClick = useCallback((feat: Feature<Geometry, KmlProperties>) => {
     setSelectedFeature(feat);
   }, []);
 

@@ -5,7 +5,7 @@ import { Feature, Geometry } from 'geojson';
 import type { InfoConfig, CategoryConfig, SubcategoryConfig } from '@/app/components/BaseMap';
 
 // Tipos genéricos para propiedades del KML
-type KmlProperties = Record<string, any>;
+type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface InfoTableProps {
   data: Feature<Geometry, KmlProperties> | null;

@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
-import type { Feature, Geometry } from 'geojson';
 
 // Dynamic imports para evitar SSR
 const MapContainer           = dynamic(() => import('react-leaflet').then(m => m.MapContainer),           { ssr: false });
@@ -26,30 +25,36 @@ export interface BaseMapProps {
   children?: React.ReactNode;
 }
 
-// Componente para redimensionar el mapa cuando cambia el tamaño del contenedor
-export const MapResizer: React.FC<{ featureSelected?: boolean }> = ({ featureSelected }) => {
-  const map = require('react-leaflet').useMap();
-  
-  useEffect(() => {
-    // Dar tiempo para que la transición CSS termine
-    const timeoutId = setTimeout(() => {
-      // Invalidar tamaño para que el mapa se ajuste correctamente
-      map.invalidateSize({ animate: true, pan: false });
-      
-      // Aplicar un efecto suave de "pan" para mejorar la experiencia visual
-      if (map._lastCenter) {
-        map.panTo(map._lastCenter, { 
-          duration: 0.4, 
-          easeLinearity: 0.25 
-        });
-      }
-    }, 400);
+// Componente wrapper para el MapResizer
+export const MapResizerWrapper = dynamic(() => import('react-leaflet').then(m => {
+  const { useMap } = m;
+  return function MapResizerWrapper({ featureSelected }: { featureSelected?: boolean }) {
+    const map = useMap();
     
-    return () => clearTimeout(timeoutId);
-  }, [featureSelected, map]);
-  
-  return null;
-};
+    useEffect(() => {
+      if (!map) return;
+      
+      // Dar tiempo para que la transición CSS termine
+      const timeoutId = setTimeout(() => {
+        // Invalidar tamaño para que el mapa se ajuste correctamente
+        map.invalidateSize({ animate: true, pan: false });
+        
+        // Aplicar un efecto suave de "pan" para mejorar la experiencia visual
+        const currentCenter = map.getCenter();
+        if (currentCenter) {
+          map.panTo(currentCenter, { 
+            duration: 0.4, 
+            easeLinearity: 0.25 
+          });
+        }
+      }, 400);
+      
+      return () => clearTimeout(timeoutId);
+    }, [featureSelected, map]);
+    
+    return null;
+  };
+}), { ssr: false });
 
 const BaseMap: React.FC<BaseMapProps> = ({
   center = [-31.768607717576884, -71.0190652636791],
@@ -61,12 +66,14 @@ const BaseMap: React.FC<BaseMapProps> = ({
 }) => {
   useEffect(() => {
     // Configurar iconos y atribuciones
-    const L = require('leaflet');
-    const iconUrl       = require('leaflet/dist/images/marker-icon.png');
-    const iconRetinaUrl = require('leaflet/dist/images/marker-icon-2x.png');
-    const shadowUrl     = require('leaflet/dist/images/marker-shadow.png');
-    L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
-    L.Control.Attribution.prototype.options.prefix = '';
+    const iconUrl       = '/images/marker-icon.png';
+    const iconRetinaUrl = '/images/marker-icon-2x.png';
+    const shadowUrl     = '/images/marker-shadow.png';
+    
+    import('leaflet').then(L => {
+      L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
+      L.Control.Attribution.prototype.options.prefix = '';
+    });
   }, []);
 
   return (
