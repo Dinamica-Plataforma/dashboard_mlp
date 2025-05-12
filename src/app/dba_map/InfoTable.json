@@ -1,0 +1,42 @@
+{
+  "nombre": "nombre_pre",
+    "categorias": [
+      {
+        "nombre": "Caracterización general",
+        "subcategorias": [
+          {
+            "nombre": "Información terreno",
+            "contenido": {
+              "Nombre": "nombre_pre",
+              "Propietario": "PROPIETARI",
+              "Superficie": "HA"
+            }
+          },
+          {
+            "nombre": "DBA",
+            "contenido": {
+              "Caracterización de terrenos por variables": "",
+              "Nivel de priorización": "",
+              "Tipo de gestión": ""
+            }
+          }
+        ]
+      },
+      {
+        "nombre": "Metodología",
+        "subcategorias": [
+          {
+            "nombre": "",
+            "contenido": {
+              "Tiempo de llegada DBA": "",
+              "Superficie afectada DBA": "",
+              "Interacción con infraestructuras críticas": "",
+              "Número de construcciones": "",
+              "Número de viviendas": ""
+            }
+          }
+        ]
+      }
+    ]
+  }
+  

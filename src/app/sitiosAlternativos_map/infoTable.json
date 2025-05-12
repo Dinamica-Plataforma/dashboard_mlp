@@ -1,0 +1,33 @@
+{
+  "nombre": "Nombre",
+  "categorias": [
+    {
+      "nombre": "General",
+      "subcategorias": [
+        {
+          "nombre": "",
+          "contenido": {
+            "Nombre": "Nombre",
+            "N de terrenos al interior de cada sitio": "area",
+            "Nivel de priorización": "",
+            "Tipo de gestión": "",
+            "Capa": ""
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Metodología",
+      "subcategorias": [
+        {
+          "nombre": "",
+          "contenido": {
+            "Interacción con área de depósito": "",
+            "Interacción con área de trazado": "",
+            "Área total del terreno ocupado por el sitio": ""
+          }
+        }
+      ]
+    }
+  ]
+}

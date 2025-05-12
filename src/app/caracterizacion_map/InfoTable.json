@@ -1,0 +1,34 @@
+{
+  "nombre": "nombre_pre",
+  "categorias": [
+    {
+      "nombre": "General",
+      "subcategorias": [
+        {
+          "nombre": "Información terreno",
+          "contenido": {
+            "Nombre predio": "nombre_pre",
+            "Propietario": "PROPIETARI",
+            "Comuna": "Comuna",
+            "Superficie": "HA"
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Vínculo con MLP",
+      "subcategorias": [
+        {
+          "nombre": "",
+          "contenido": {
+            "DBA": "DBA_Mauro",
+            "Obras EVU": "ObEVU",
+            "Sitios Alternativos": "Sit_Alt",
+            "Operación actual": "OpAct"
+          }
+        }
+      ]
+    }
+  ]
+}
+  

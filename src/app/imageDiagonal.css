@@ -1,0 +1,7 @@
+.clip-diagonal {
+  clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.h-full-diagonal {
+  height: 100%;
+} 
