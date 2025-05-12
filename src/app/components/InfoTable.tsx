@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Feature, Geometry } from 'geojson';
-import type { InfoConfig, CategoryConfig, SubcategoryConfig } from '@/app/components/BaseMap';
+import type { InfoConfig } from '@/app/components/BaseMap';
 
 // Tipos genéricos para propiedades del KML
 type KmlProperties = Record<string, string | number | boolean | null>;

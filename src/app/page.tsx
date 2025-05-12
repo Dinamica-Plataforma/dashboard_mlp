@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { MapIcon, DocumentTextIcon, BuildingOfficeIcon, MapPinIcon, DocumentCheckIcon, CogIcon } from '@heroicons/react/24/outline';
+import { MapIcon, DocumentTextIcon, MapPinIcon, DocumentCheckIcon, CogIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
   const menuItems = [

@@ -11,7 +11,6 @@ import type { Layer, LeafletEvent } from 'leaflet';
 type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface DbaMapProps {
-  kmlUrl: string;
   config: InfoConfig;
   style?: React.CSSProperties;
 }
@@ -56,7 +55,7 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, Km
   return null;
 };
 
-export default function DbaMap({ kmlUrl, config, style }: DbaMapProps) {
+export default function DbaMap({config, style }: DbaMapProps) {
   const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, KmlProperties> | null>(null);
   
   const handleFeatureClick = useCallback((feat: Feature<Geometry, KmlProperties>) => {
@@ -90,7 +89,6 @@ export default function DbaMap({ kmlUrl, config, style }: DbaMapProps) {
     <div className="relative" style={style}>
       <div style={containerStyle}>
         <BaseMap>
-          <KmlLayer url={kmlUrl} onFeatureClick={handleFeatureClick} />
           <MapResizer featureSelected={!!selectedFeature} />
         </BaseMap>
       </div>

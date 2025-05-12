@@ -6,7 +6,7 @@ import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
 import { useMap } from 'react-leaflet';
 import * as omnivore from 'leaflet-omnivore';
-import type { Layer, LeafletEvent } from 'leaflet';
+import type { Layer } from 'leaflet';
 
 type KmlProperties = Record<string, string | number | boolean | null>;
 

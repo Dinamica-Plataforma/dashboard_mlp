@@ -1,5 +1,5 @@
 declare module 'leaflet-omnivore' {
-  import { Layer, LeafletEventHandlerFn } from 'leaflet';
+  import { Layer } from 'leaflet';
 
   interface KmlLayer extends Layer {
     eachLayer(fn: (layer: Layer) => void): void;
