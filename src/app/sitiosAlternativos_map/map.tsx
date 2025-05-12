@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import BaseMap, { MapResizer, InfoConfig } from '@/app/components/BaseMap';
+import BaseMap, { InfoConfig, MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
 import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
+import { useMap } from 'react-leaflet';
+import * as omnivore from 'leaflet-omnivore';
+import type { Layer, LeafletEvent } from 'leaflet';
+
+type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface SitiosAlternativosMapProps {
   kmlUrl: string;
@@ -12,22 +17,21 @@ interface SitiosAlternativosMapProps {
 }
 
 // Capa KML con estilo uniforme para sitios alternativos
-const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, any>) => void }> = ({ url, onFeatureClick }) => {
-  const map = require('react-leaflet').useMap();
+const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }> = ({ url, onFeatureClick }) => {
+  const map = useMap();
   useEffect(() => {
     console.log('Cargando KML desde:', url);
-    const omnivore = require('leaflet-omnivore');
     const layer = omnivore.kml(url);
     
     layer.on('ready', () => {
       console.log('KML cargado correctamente');
       // Estilo uniforme para todos los polígonos
-      layer.eachLayer((lyr: any) => {
-        const feat: Feature<Geometry, any> = lyr.feature || lyr.toGeoJSON();
+      layer.eachLayer((lyr: Layer) => {
+        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
         console.log('Procesando capa:', feat);
         // Aplicar estilo con colores específicos para sitios alternativos
-        if (lyr.setStyle) {
-          lyr.setStyle({
+        if ((lyr as any).setStyle) {
+          (lyr as any).setStyle({
             color: '#186170',       // contorno verde
             fillColor: '#186170',   // relleno verde
             fillOpacity: 0.4,
@@ -42,8 +46,8 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, an
       map.fitBounds(bounds, { padding: [20, 20], animate: true });
     });
 
-    layer.on('error', (error: any) => {
-      console.error('Error al cargar el KML:', error);
+    layer.on('error', (event: LeafletEvent) => {
+      console.error('Error al cargar el KML:', event);
     });
 
     layer.addTo(map);
@@ -53,9 +57,9 @@ const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, an
 };
 
 export default function SitiosAlternativosMap({ kmlUrl, config, style }: SitiosAlternativosMapProps) {
-  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, any> | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, KmlProperties> | null>(null);
   
-  const handleFeatureClick = useCallback((feat: Feature<Geometry, any>) => {
+  const handleFeatureClick = useCallback((feat: Feature<Geometry, KmlProperties>) => {
     setSelectedFeature(feat);
   }, []);
 
