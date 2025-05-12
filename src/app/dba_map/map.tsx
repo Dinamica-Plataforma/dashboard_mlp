@@ -1,159 +1,100 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import BaseMap, { MapResizer, InfoConfig } from '@/app/components/BaseMap';
+import React, { useState, useCallback, useEffect } from 'react';
+import BaseMap, { InfoConfig, MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
 import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
 import { useMap } from 'react-leaflet';
+import * as omnivore from 'leaflet-omnivore';
+import type { Layer, LeafletEvent } from 'leaflet';
+
+type KmlProperties = Record<string, string | number | boolean | null>;
 
 interface DbaMapProps {
+  kmlUrl: string;
   config: InfoConfig;
   style?: React.CSSProperties;
 }
 
-// Manager de capas con panes para controlar el orden de dibujo
-const LayerControlManager: React.FC<{
-  dbaLinesUrl: string;
-  dbaRiverUrl: string;
-  caractUrl: string;
-  setSelectedFeature: (f: Feature<Geometry, any> | null) => void;
-}> = ({ dbaLinesUrl, dbaRiverUrl, caractUrl, setSelectedFeature }) => {
+// Capa KML con estilo uniforme para DBA
+const KmlLayer: React.FC<{ url: string; onFeatureClick: (f: Feature<Geometry, KmlProperties>) => void }> = ({ url, onFeatureClick }) => {
   const map = useMap();
-
   useEffect(() => {
-    const omnivore = require('leaflet-omnivore');
-    const L = require('leaflet');
-
-    // 1️⃣ Crear panes con z-index escalonado
-    const panes = [
-      { name: 'paneCaract', zIndex: 200 },
-      { name: 'paneRiver',  zIndex: 400 },
-      { name: 'paneLines',  zIndex: 500 },
-    ];
-    panes.forEach(({ name, zIndex }) => {
-      if (!map.getPane(name)) {
-        map.createPane(name);
-        map.getPane(name)!.style.zIndex = String(zIndex);
-      }
+    console.log('Cargando KML desde:', url);
+    const layer = omnivore.kml(url);
+    
+    layer.on('ready', () => {
+      console.log('KML cargado correctamente');
+      // Estilo uniforme para todos los polígonos
+      layer.eachLayer((lyr: Layer) => {
+        const feat: Feature<Geometry, KmlProperties> = (lyr as any).feature || (lyr as any).toGeoJSON();
+        console.log('Procesando capa:', feat);
+        // Aplicar estilo con colores específicos para DBA
+        if ((lyr as any).setStyle) {
+          (lyr as any).setStyle({
+            color: '#186170',       // contorno
+            fillColor: '#186170',   // relleno
+            fillOpacity: 0.4,
+            weight: 2
+          });
+        }
+        lyr.on('click', () => onFeatureClick(feat));
+      });
+      // Ajustar vista a todos los polígonos
+      const bounds = layer.getBounds();
+      console.log('Ajustando vista a bounds:', bounds);
+      map.fitBounds(bounds, { padding: [20, 20], animate: true });
     });
 
-    // … dentro de useEffect …
-    const initLayer = (
-      url: string,
-      pane: string,
-      styleOpts: L.PathOptions,
-      filterFn?: (lyr: any) => boolean
-    ) => {
-      const raw = omnivore.kml(url);
-      const group = L.featureGroup().addTo(map); // agrego solo EL FEATUREGROUP
-      raw.on('ready', () => {
-        raw.eachLayer((lyr: any) => {
-          // asignar al pane
-          lyr.options = { ...lyr.options, pane };
-          // filtrar si corresponde
-          if (filterFn && !filterFn(lyr)) return;
-          lyr.setStyle?.(styleOpts);
-          lyr.on('click', () => setSelectedFeature(lyr.feature || lyr.toGeoJSON()));
-          group.addLayer(lyr);  // aquí sí añado la geometría al grupo, NO al mapa directo
-        });
-      });
-      return group;  // devuelvo el grupo, no el raw layer
-    };
+    layer.on('error', (event: LeafletEvent) => {
+      console.error('Error al cargar el KML:', event);
+    });
 
-
-    // Líneas DBA
-    const lines = initLayer(
-      dbaLinesUrl,
-      'paneLines',
-      { color: '#e77742', weight: 3 }
-    );
-
-    // Río DBA
-    const river = initLayer(
-      dbaRiverUrl,
-      'paneRiver',
-      { color: '#417D87', weight: 3, fillOpacity: 0.5 }
-    );
-
-    // Caracterización filtrada
-    const caract = initLayer(
-      caractUrl,
-      'paneCaract',
-      { color: '#d6bd51', fillColor: '#e6d071', fillOpacity: 0.2, weight: 2 },
-      (lyr: any) => {
-        const feat = lyr.feature || lyr.toGeoJSON();
-        const props = feat.properties || {};
-        if (!props.description) return false;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(props.description, 'text/html');
-        const cells = doc.getElementsByTagName('td');
-        for (let i = 0; i < cells.length; i++) {
-          if (cells[i].textContent?.trim() === 'DBA_Mauro') {
-            return cells[i + 1]?.textContent?.trim() === 'Si';
-          }
-        }
-        return false;
-      }
-    );
-
-    // Control de overlays
-    const control = L.control
-      .layers(
-        {},
-        {
-          'DBA Líneas': lines,
-          'DBA Río': river,
-          'Caracterización DBA': caract,
-        },
-        { collapsed: true }
-      )
-      .addTo(map);
-
-    // Limpieza
-    return () => {
-      [lines, river, caract].forEach(layer => map.removeLayer(layer));
-      map.removeControl(control);
-    };
-  }, [dbaLinesUrl, dbaRiverUrl, caractUrl, map, setSelectedFeature]);
-
+    layer.addTo(map);
+    return () => { map.removeLayer(layer); };
+  }, [url, map, onFeatureClick]);
   return null;
 };
 
-// Componente principal
-export default function DbaMapComponent({config, style }: DbaMapProps) {
-  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, any> | null>(null);
+export default function DbaMap({ kmlUrl, config, style }: DbaMapProps) {
+  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry, KmlProperties> | null>(null);
+  
+  const handleFeatureClick = useCallback((feat: Feature<Geometry, KmlProperties>) => {
+    setSelectedFeature(feat);
+  }, []);
 
-  // Rutas KML
-  const dbaLinesUrl = '/kmz/dba_lines.kml';
-  const dbaRiverUrl = '/kmz/dba_river.kml';
-  const caractUrl    = '/kmz/caract.kml';
-
-  // Estilos contenedor
-  const containerStyle: React.CSSProperties = selectedFeature
-    ? {
-        position: 'absolute',
-        width: 'calc(67% - 1px)',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        boxShadow: '-4px 0 10px rgba(0,0,0,0.1)',
-        borderRadius: '8px 0 0 8px',
-      }
-    : { position: 'absolute', width: '100%', right: 0, top: 0, bottom: 0 };
+  // Calcular estilos para el contenedor del mapa
+  const containerStyle = {
+    transition: 'all 0.5s cubic-bezier(0.34, 1.25, 0.64, 1)',
+    transform: 'translate3d(0,0,0)',
+    backfaceVisibility: 'hidden' as const,
+    willChange: 'width, transform' as const,
+    ...(selectedFeature ? {
+      position: 'absolute' as const,
+      width: 'calc(67% - 1px)',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      boxShadow: '-4px 0 10px rgba(0, 0, 0, 0.1)',
+      borderRadius: '8px 0 0 8px',
+    } : {
+      position: 'absolute' as const,
+      width: '100%',
+      right: 0,
+      top: 0,
+      bottom: 0,
+    })
+  };
 
   return (
     <div className="relative" style={style}>
       <div style={containerStyle}>
         <BaseMap>
-          <LayerControlManager
-            dbaLinesUrl={dbaLinesUrl}
-            dbaRiverUrl={dbaRiverUrl}
-            caractUrl={caractUrl}
-            setSelectedFeature={setSelectedFeature}
-          />
+          <KmlLayer url={kmlUrl} onFeatureClick={handleFeatureClick} />
           <MapResizer featureSelected={!!selectedFeature} />
         </BaseMap>
       </div>
+
       <InfoTable
         data={selectedFeature}
         isVisible={!!selectedFeature}

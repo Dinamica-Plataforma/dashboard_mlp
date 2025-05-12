@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import BaseMap, { InfoConfig } from '@/app/components/BaseMap';
-import { MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
+import BaseMap, { InfoConfig, MapResizerWrapper as MapResizer } from '@/app/components/BaseMap';
 import InfoTable from '@/app/components/InfoTable';
 import type { Feature, Geometry } from 'geojson';
 import { useMap } from 'react-leaflet';
 import * as omnivore from 'leaflet-omnivore';
-import type { Layer } from 'leaflet';
+import type { Layer, LeafletEvent } from 'leaflet';
 
 type KmlProperties = Record<string, string | number | boolean | null>;
 
